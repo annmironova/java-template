@@ -16,7 +16,6 @@ public class IntSort {
         arr1 = Arrays.copyOfRange(array, jump, jump + ord);
         arr2 = Arrays.copyOfRange(array, jump + ord, jump + ord + size2);
         newArray = merge(arr1, arr2);
-
         for (int i = 0; i < size2 + ord; i++)
           array[jump + i] = newArray[i];
         jump += 2 * ord;

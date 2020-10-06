@@ -1,5 +1,9 @@
 package edu.spbu.matrix;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.ArrayList;
+
 /**
  * Плотная матрица
  */
@@ -10,6 +14,20 @@ public class DenseMatrix implements Matrix
    * @param fileName
    */
   public DenseMatrix(String fileName) {
+    BufferedReader buf = new BufferedReader(new FileReader(fileName));
+    ArrayList<String> rows = new ArrayList<>();
+
+
+    while (buf.ready()) {
+      rows.add(buf.readLine());
+    }
+    int height = rows.size();
+    int weight = rows.get(0).split(" ").length;
+    int[][] M = new int[height][weight];
+    for (int i = 0; i < height; i++)
+      for (int j = 0; j < weight; j++) {
+
+      }
 
   }
   /**

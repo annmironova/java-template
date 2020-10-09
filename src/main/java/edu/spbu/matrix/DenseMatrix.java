@@ -1,7 +1,9 @@
 package edu.spbu.matrix;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 
 /**
@@ -13,7 +15,7 @@ public class DenseMatrix implements Matrix
    * загружает матрицу из файла
    * @param fileName
    */
-  public DenseMatrix(String fileName) {
+  public DenseMatrix(String fileName) throws IOException {
     BufferedReader buf = new BufferedReader(new FileReader(fileName));
     ArrayList<String> rows = new ArrayList<>();
 
@@ -26,10 +28,11 @@ public class DenseMatrix implements Matrix
     int[][] M = new int[height][weight];
     for (int i = 0; i < height; i++)
       for (int j = 0; j < weight; j++) {
-
+        String[] row = rows.get(i).split(" ");
+        M[i][j] = Integer.parseInt(row[j]);
       }
-
   }
+
   /**
    * однопоточное умнджение матриц
    * должно поддерживаться для всех 4-х вариантов

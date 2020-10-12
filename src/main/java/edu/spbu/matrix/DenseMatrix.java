@@ -1,8 +1,9 @@
 package edu.spbu.matrix;
 
-import java.io.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.io.IOException;
 
 /**
  * Плотная матрица
@@ -18,12 +19,10 @@ public class DenseMatrix implements Matrix {
       String[] row;
       ArrayList<Double[]> a = new ArrayList<Double[]>();
 
-
       while (data.hasNextLine()) {
         row = data.nextLine().split(" ");
         buf = new Double[row.length];
-        int w = buf.length;
-        for (int i = 0; i < w; i++) {
+        for (int i = 0; i < buf.length; i++) {
           buf[i] = Double.parseDouble(row[i]);
         }
         a.add(buf);
@@ -44,16 +43,17 @@ public class DenseMatrix implements Matrix {
     }
   }
 
-  public DenseMatrix(double[][] matr) {
-    this.M = matr;
-    this.height = matr.length;
-    this.width = matr[0].length;
+  public DenseMatrix(double[][] mat) {
+    this.M = mat;
+    this.height = mat.length;
+    this.width = mat[0].length;
   }
 
   @Override public Matrix mul(Matrix o)
   {
-    if (o instanceof DenseMatrix)
+    if (o instanceof DenseMatrix) {
       return mul((DenseMatrix) o);
+    }
     else return null;
   }
 
@@ -81,12 +81,20 @@ public class DenseMatrix implements Matrix {
     return null;
   }
 
-  /**
-   * спавнивает с обоими вариантами
-   * @param o
-   * @return
-   */
   @Override public boolean equals(Object o) {
+    if (o instanceof DenseMatrix) {
+      DenseMatrix DM = (DenseMatrix)o;
+      if ((width == DM.width) && (height == DM.height)) {
+        for (int i = 0; i < height; i++) {
+          for (int j = 0; j < width; j++) {
+            if (DM.M[i][j] != M[i][j]) {
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    }
     return false;
   }
 

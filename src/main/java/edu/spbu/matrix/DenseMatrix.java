@@ -1,49 +1,74 @@
 package edu.spbu.matrix;
 
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 /**
  * Плотная матрица
  */
-public class DenseMatrix implements Matrix
-{
-  /**
-   * загружает матрицу из файла
-   * @param fileName
-   */
-  public DenseMatrix(String fileName) throws IOException {
-    BufferedReader buf = new BufferedReader(new FileReader(fileName));
-    ArrayList<String> rows = new ArrayList<>();
+public class DenseMatrix implements Matrix {
+  public double[][] M;
+  public int height, width;
+
+  public DenseMatrix(String fileName) {
+    try {
+      Scanner data = new Scanner(new File(fileName));
+      Double[] buf = {};
+      String[] row;
+      ArrayList<Double[]> a = new ArrayList<Double[]>();
 
 
-    while (buf.ready()) {
-      rows.add(buf.readLine());
-    }
-    int height = rows.size();
-    int weight = rows.get(0).split(" ").length;
-    int[][] M = new int[height][weight];
-    for (int i = 0; i < height; i++)
-      for (int j = 0; j < weight; j++) {
-        String[] row = rows.get(i).split(" ");
-        M[i][j] = Integer.parseInt(row[j]);
+      while (data.hasNextLine()) {
+        row = data.nextLine().split(" ");
+        buf = new Double[row.length];
+        int w = buf.length;
+        for (int i = 0; i < w; i++) {
+          buf[i] = Double.parseDouble(row[i]);
+        }
+        a.add(buf);
       }
+
+      double[][] result = new double[a.size()][buf.length];
+      for (int i = 0; i < result.length; i++) {
+        for (int j = 0; j < result[0].length; j++) {
+          result[i][j] = a.get(i)[j];
+        }
+      }
+
+      M = result;
+      this.height = result.length;
+      this.width = result[0].length;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
-  /**
-   * однопоточное умнджение матриц
-   * должно поддерживаться для всех 4-х вариантов
-   *
-   * @param o
-   * @return
-   */
+  public DenseMatrix(double[][] matr) {
+    this.M = matr;
+    this.height = matr.length;
+    this.width = matr[0].length;
+  }
+
   @Override public Matrix mul(Matrix o)
   {
-    return null;
+    if (o instanceof DenseMatrix)
+      return mul((DenseMatrix) o);
+    else return null;
   }
+
+  private DenseMatrix mul(DenseMatrix DM) {
+    double[][] res = new double[height][DM.width];
+    for (int i = 0; i < height; i++) {
+      for (int j = 0; j < DM.width; j++) {
+        for (int k = 0; k < DM.height; k++) {
+          res[i][j] += M[i][k] * DM.M[k][j];
+        }
+      }
+    }
+    return new DenseMatrix(res);
+  }
+
 
   /**
    * многопоточное умножение матриц

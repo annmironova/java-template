@@ -2,6 +2,8 @@ package edu.spbu;
 
 import edu.spbu.matrix.*;
 
+import java.io.FileNotFoundException;
+
 public class MatrixPerfTest
 {
   public static final String MATRIX1_NAME = "m1.txt";

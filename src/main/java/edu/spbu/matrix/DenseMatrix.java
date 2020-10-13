@@ -15,31 +15,26 @@ public class DenseMatrix implements Matrix {
   public DenseMatrix(String fileName) {
     try {
       Scanner data = new Scanner(new File(fileName));
-      Double[] buf = {};
+      double[] buf = {};
       String[] row;
-      ArrayList<Double[]> a = new ArrayList<>();
+      ArrayList<double[]> a = new ArrayList<>();
 
       while (data.hasNextLine()) {
         row = data.nextLine().split(" ");
-        buf = new Double[row.length];
+        buf = new double[row.length];
         for (int i = 0; i < buf.length; i++) {
           buf[i] = Double.parseDouble(row[i]);
         }
         a.add(buf);
       }
 
-      double[][] result = new double[a.size()][buf.length];
-      for (int i = 0; i < result.length; i++) {
-        for (int j = 0; j < result[0].length; j++) {
-          result[i][j] = a.get(i)[j];
-        }
-      }
+      double[][] result = a.toArray(new double[a.size()][]);
 
       M = result;
       this.height = result.length;
       this.width = result[0].length;
-    } catch (IOException ex) {
-      ex.printStackTrace();
+    } catch (IOException ioe) {
+      ioe.printStackTrace();
     }
   }
 
@@ -108,6 +103,7 @@ public class DenseMatrix implements Matrix {
           }
         }
       }
+      else {return false;}
       return true;
     }
     return false;

@@ -1,5 +1,6 @@
 package edu.spbu.matrix;
 
+import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Scanner;
@@ -44,6 +45,7 @@ public class DenseMatrix implements Matrix {
     this.width = mat[0].length;
   }
 
+
   public String ToString(double[][] res, int h, int w)
   {
     StringBuilder builder = new StringBuilder();
@@ -63,7 +65,12 @@ public class DenseMatrix implements Matrix {
     if (o instanceof DenseMatrix) {
       return mul((DenseMatrix) o);
     }
-    else return null;
+    else if (o instanceof SparseMatrix) {
+      return mul((SparseMatrix) o);
+    }
+    else {
+      return null;
+    }
   }
 
   private DenseMatrix mul(DenseMatrix DM) {
@@ -79,6 +86,19 @@ public class DenseMatrix implements Matrix {
     return new DenseMatrix(res);
   }
 
+  private DenseMatrix mul(SparseMatrix SM) {
+    double[][] res = new double[height][SM.width];
+    SparseMatrix SMT = SM.transposeSM();
+    for (Point key : SMT.M.keySet()) {
+      for (int i = 0; i < this.height; i++) {
+        if (M[i][key.y] != 0) {
+          res[i][key.x] += M[i][key.y] * SMT.M.get(key);
+        }
+      }
+    }
+    ToString(res, res.length, res[0].length);
+    return new DenseMatrix(res);
+  }
 
   /**
    * многопоточное умножение матриц
@@ -103,7 +123,9 @@ public class DenseMatrix implements Matrix {
           }
         }
       }
-      else {return false;}
+      else {
+        return false;
+      }
       return true;
     }
     return false;

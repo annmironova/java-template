@@ -65,16 +65,14 @@ public class SparseMatrix implements Matrix {
         if (SM.M.containsKey(a)) {
           Point b = new Point(key.x, i);
           if (res.containsKey(b)) {
-            double value = res.get(b) + M.get(key) * SM.M.get(a);
-            res.put(b, value);
+            res.put(b, res.get(b) + M.get(key) * SM.M.get(a));
           } else {
-            double value = M.get(key) * SM.M.get(a);
-            res.put(b, value);
+            res.put(b, M.get(key) * SM.M.get(a));
           }
         }
       }
     }
-    return new SparseMatrix(res, this.height, SM.width);
+    return new SparseMatrix(res, height, SM.width);
   }
 
   private DenseMatrix mul(DenseMatrix DM) {
@@ -82,24 +80,13 @@ public class SparseMatrix implements Matrix {
     for (Point key : M.keySet()) {
       for (int i = 0; i < height; i++) {
         if (DM.M[key.y][i] != 0) {
-          if (res[key.x][i] != 0) {
             res[key.x][i] += M.get(key) * DM.M[key.y][i];
-          } else {
-            res[key.x][i] = M.get(key) * DM.M[key.y][i];
           }
         }
       }
-    }
     return new DenseMatrix(res);
   }
 
-  public SparseMatrix transposeSM() {
-    HashMap<Point, Double> transposed = new HashMap<>();
-    for (Point key : M.keySet()) {
-      transposed.put(new Point(key.y, key.x), M.get(key));
-    }
-    return new SparseMatrix(transposed, height, width);
-  }
 
   /**
    * многопоточное умножение матриц
@@ -133,14 +120,9 @@ public class SparseMatrix implements Matrix {
             }
           }
         }
-        if (count1 == count2) {
-          return true;
-        }
+        return (count1 == count2);
       }
-      return false;
     }
-
-
     else if (o instanceof DenseMatrix) {
       DenseMatrix M2 = (DenseMatrix) o;
       if (height != M2.height || width != M2.width) {
@@ -161,10 +143,7 @@ public class SparseMatrix implements Matrix {
           }
         }
       }
-      if (count1 == count2) {
-        return true;
-      }
-      return false;
+      return (count1 == count2);
     }
     return false;
   }

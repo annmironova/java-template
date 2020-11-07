@@ -88,11 +88,10 @@ public class DenseMatrix implements Matrix {
 
   private DenseMatrix mul(SparseMatrix SM) {
     double[][] res = new double[height][SM.width];
-    SparseMatrix SMT = SM.transposeSM();
-    for (Point key : SMT.M.keySet()) {
-      for (int i = 0; i < this.height; i++) {
-        if (M[i][key.y] != 0) {
-          res[i][key.x] += M[i][key.y] * SMT.M.get(key);
+    for (Point key : SM.M.keySet()) {
+      for (int i = 0; i < height; i++) {
+        if (M[i][key.x] != 0) {
+          res[i][key.y] += M[i][key.x] * SM.M.get(key);
         }
       }
     }

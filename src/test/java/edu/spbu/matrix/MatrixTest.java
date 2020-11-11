@@ -19,7 +19,7 @@ public class MatrixTest
   public void mulDS() {
     Matrix m1 = new DenseMatrix("sm1.txt");
     Matrix m2 = new SparseMatrix("sm2.txt");
-    Matrix expected = new DenseMatrix("resultS.txt");
+    Matrix expected = new SparseMatrix("resultS.txt");
     assertEquals(expected, m1.mul(m2));
   }
 

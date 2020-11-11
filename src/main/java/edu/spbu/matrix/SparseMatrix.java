@@ -34,8 +34,8 @@ public class SparseMatrix implements Matrix {
       }
       height = h;
       width = w;
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
@@ -47,17 +47,38 @@ public class SparseMatrix implements Matrix {
 
   @Override
   public Matrix mul(Matrix o) {
-    if (o instanceof DenseMatrix) {
-      return mul((DenseMatrix) o);
+    try {
+      if (o instanceof DenseMatrix) {
+        return mul((DenseMatrix) o);
+      }
+      if (o instanceof SparseMatrix) {
+        return mul((SparseMatrix) o);
+      }
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
     }
-    if (o instanceof SparseMatrix) {
-      return mul((SparseMatrix) o);
-    } else {
-      return null;
-    }
+    return null;
   }
 
-  private SparseMatrix mul(SparseMatrix SM) {
+  public void ToString(HashMap<Point, Double> res, int h, int w) {
+    StringBuilder builder = new StringBuilder();
+    for (int i = 0; i < h; i++) {
+      for (int j = 0; j < w; j++) {
+        Point a = new Point(i, j);
+        if (res.containsKey(a)) {
+          builder.append(res.get(a)).append(" ");
+        } else {
+          builder.append("0").append(" ");
+        }
+      }
+      builder.append("\n");
+    }
+    System.out.println(builder.toString());
+  }
+
+  private SparseMatrix mul(SparseMatrix SM) throws Exception {
+    if (width != SM.height) throw new Exception("The number of columns of the 1st matrix must " +
+            "be the same as the number of rows of the 2d matrix");
     HashMap<Point, Double> res = new HashMap<>();
     for (Point key : M.keySet()) {
       for (int i = 0; i < height; i++) {
@@ -72,10 +93,13 @@ public class SparseMatrix implements Matrix {
         }
       }
     }
+    ToString(res, height, SM.width);
     return new SparseMatrix(res, height, SM.width);
   }
 
-  private DenseMatrix mul(DenseMatrix DM) {
+  private DenseMatrix mul(DenseMatrix DM) throws Exception {
+      if (width != DM.height) throw new Exception("The number of columns of the 1st matrix must " +
+              "be the same as the number of rows of the 2d matrix");
     double[][] res = new double[height][DM.width];
     for (Point key : M.keySet()) {
       for (int i = 0; i < height; i++) {
@@ -103,47 +127,45 @@ public class SparseMatrix implements Matrix {
   public boolean equals(Object o) {
     if (o instanceof SparseMatrix) {
       SparseMatrix M2 = (SparseMatrix) o;
-      if (height != M2.height || width != M2.width) {
-        return false;
+      if (height == M2.height || width == M2.width) {
+        int count1 = 0, count2 = 0;
+        if (M.size() == M2.M.size()) {
+          for (Point key : M.keySet()) {
+            count1++;
+            if (M2.M.containsKey(key)) {
+              double a = M.get(key);
+              double b = M2.M.get(key);
+              if (a == b) {
+                count2++;
+              }
+            }
+          }
+          return (count1 == count2);
+        }
       }
-      int count1 = 0, count2 = 0;
-      if (M.size() != M2.M.size()) {
-        return false;
-      } else {
-        for (Point key : M.keySet()) {
-          count1++;
-          if (M2.M.containsKey(key)) {
-            double a = M.get(key);
-            double b = M2.M.get(key);
-            if (a == b) {
+      return false;
+    }
+
+    else if (o instanceof DenseMatrix) {
+      DenseMatrix M2 = (DenseMatrix) o;
+      if (height == M2.height || width == M2.width) {
+        int count1 = 0, count2 = 0;
+        for (int i = 0; i < M2.height; i++) {
+          for (int j = 0; j < M2.width; j++) {
+            if (M2.M[i][j] != 0) {
+              count1++;
+            }
+          }
+        }
+        if (M.size() == count1) {
+          for (Point key : M.keySet()) {
+            if (M2.M[key.x][key.y] == M.get(key)) {
               count2++;
             }
           }
         }
         return (count1 == count2);
       }
-    }
-    else if (o instanceof DenseMatrix) {
-      DenseMatrix M2 = (DenseMatrix) o;
-      if (height != M2.height || width != M2.width) {
-        return false;
-      }
-      int count1 = 0, count2 = 0;
-      for (int i = 0; i < M2.height; i++) {
-        for (int j = 0; j < M2.width; j++) {
-          if (M2.M[i][j] != 0) {
-            count1++;
-          }
-        }
-      }
-      if (M.size() == count1) {
-        for (Point key : M.keySet()) {
-          if (M2.M[key.x][key.y] == M.get(key)) {
-            count2++;
-          }
-        }
-      }
-      return (count1 == count2);
     }
     return false;
   }

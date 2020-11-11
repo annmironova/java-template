@@ -3,6 +3,7 @@ package edu.spbu.matrix;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 import java.io.IOException;
 
@@ -16,7 +17,7 @@ public class DenseMatrix implements Matrix {
   public DenseMatrix(String fileName) {
     try {
       Scanner data = new Scanner(new File(fileName));
-      double[] buf = {};
+      double[] buf;
       String[] row;
       ArrayList<double[]> a = new ArrayList<>();
 
@@ -34,8 +35,8 @@ public class DenseMatrix implements Matrix {
       M = result;
       this.height = result.length;
       this.width = result[0].length;
-    } catch (IOException ioe) {
-      ioe.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
@@ -46,8 +47,7 @@ public class DenseMatrix implements Matrix {
   }
 
 
-  public String ToString(double[][] res, int h, int w)
-  {
+  public void ToString(double[][] res, int h, int w) {
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < h; i++) {
       for (int j = 0; j < w; j++) {
@@ -56,24 +56,26 @@ public class DenseMatrix implements Matrix {
       builder.append("\n");
     }
     System.out.println(builder.toString());
-    return builder.toString();
   }
 
   @Override
-  public Matrix mul(Matrix o)
-  {
-    if (o instanceof DenseMatrix) {
-      return mul((DenseMatrix) o);
+  public Matrix mul(Matrix o) {
+    try {
+      if (o instanceof DenseMatrix) {
+          return mul((DenseMatrix) o);
+      }
+      else if (o instanceof SparseMatrix) {
+        return mul((SparseMatrix) o);
+      }
+    } catch (Exception e) {
+      System.out.println(e.getMessage());
     }
-    else if (o instanceof SparseMatrix) {
-      return mul((SparseMatrix) o);
-    }
-    else {
-      return null;
-    }
+    return null;
   }
 
-  private DenseMatrix mul(DenseMatrix DM) {
+  private DenseMatrix mul(DenseMatrix DM) throws Exception {
+    if (width != DM.height) throw new Exception("The number of columns of the 1st matrix must " +
+            "be the same as the number of rows of the 2d matrix");
     double[][] res = new double[height][DM.width];
     for (int i = 0; i < height; i++) {
       for (int j = 0; j < DM.width; j++) {
@@ -86,17 +88,23 @@ public class DenseMatrix implements Matrix {
     return new DenseMatrix(res);
   }
 
-  private DenseMatrix mul(SparseMatrix SM) {
-    double[][] res = new double[height][SM.width];
+  private SparseMatrix mul(SparseMatrix SM) throws Exception{
+    if (width != SM.height) throw new Exception("The number of columns of the 1st matrix must " +
+            "be the same as the number of rows of the 2d matrix");
+    HashMap<Point, Double> res = new HashMap<>();
     for (Point key : SM.M.keySet()) {
       for (int i = 0; i < height; i++) {
         if (M[i][key.x] != 0) {
-          res[i][key.y] += M[i][key.x] * SM.M.get(key);
+          Point a = new Point(i, key.y);
+          if (res.containsKey(a)) {
+            res.put(a, res.get(a) + M[i][key.x] * SM.M.get(key));
+          } else {
+            res.put(a, M[i][key.x] * SM.M.get(key));
+          }
         }
       }
     }
-    ToString(res, res.length, res[0].length);
-    return new DenseMatrix(res);
+    return new SparseMatrix(res, height, SM.width);
   }
 
   /**
@@ -105,14 +113,15 @@ public class DenseMatrix implements Matrix {
    * @param o
    * @return
    */
-  @Override public Matrix dmul(Matrix o)
-  {
+  @Override
+  public Matrix dmul(Matrix o) {
     return null;
   }
 
-  @Override public boolean equals(Object o) {
+  @Override
+  public boolean equals(Object o) {
     if (o instanceof DenseMatrix) {
-      DenseMatrix DM = (DenseMatrix)o;
+      DenseMatrix DM = (DenseMatrix) o;
       if ((width == DM.width) && (height == DM.height)) {
         for (int i = 0; i < height; i++) {
           for (int j = 0; j < width; j++) {
@@ -121,13 +130,33 @@ public class DenseMatrix implements Matrix {
             }
           }
         }
-      }
-      else {
+      } else {
         return false;
       }
       return true;
     }
+
+    if (o instanceof SparseMatrix) {
+      SparseMatrix SM = (SparseMatrix) o;
+      if ((width == SM.width) && (height == SM.height)) {
+        int count1 = 0, count2 = 0;
+        for (int i = 0; i < height; i++) {
+          for (int j = 0; j < width; j++) {
+            if (M[i][j] != 0) {
+              count1++;
+            }
+          }
+        }
+        if (SM.M.size() == count1) {
+          for (Point key : SM.M.keySet()) {
+            if (M[key.x][key.y] == SM.M.get(key)) {
+              count2++;
+            }
+          }
+        }
+        return (count1 == count2);
+      }
+    }
     return false;
   }
-
 }

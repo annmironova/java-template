@@ -2,9 +2,8 @@ package edu.spbu.matrix;
 
 import java.awt.*;
 import java.io.File;
-import java.util.HashMap;
+import java.util.*;
 import java.io.IOException;
-import java.util.Scanner;
 
 /**
  * Разряженная матрица
@@ -93,7 +92,7 @@ public class SparseMatrix implements Matrix {
         }
       }
     }
-    ToString(res, height, SM.width);
+  //  ToString(res, height, SM.width);
     return new SparseMatrix(res, height, SM.width);
   }
 
@@ -111,15 +110,89 @@ public class SparseMatrix implements Matrix {
     return new DenseMatrix(res);
   }
 
+  class myThread implements Runnable {
+    Thread t;
+    SparseMatrix S;
+    Point[] S1;
+    HashMap<Point, Double> res;
+    int start, end;
 
-  /**
-   * многопоточное умножение матриц
-   *
-   * @param o
-   * @return
-   */
+    myThread(SparseMatrix S, Point[] S1, HashMap<Point, Double> res, int start, int end) {
+      this.S = S;
+      this.S1 = S1;
+      this.res = res;
+      this.start = start;
+      this.end = end;
+      t = new Thread(this);
+      t.start();
+    }
+
+    @Override
+    public void run() {
+      for (int k = start; k < end; k++) {
+        Point key = S1[k];
+        for (int i = 0; i < height; i++) {
+          Point a = new Point(key.y, i);
+          if (S.M.containsKey(a)) {
+            Point b = new Point(key.x, i);
+            addElement(key, a, b, S, res);
+            }
+          }
+        }
+      }
+    }
+
+
+  synchronized public void addElement (Point key, Point a, Point b, SparseMatrix S, HashMap<Point, Double> res) {
+    if (res.containsKey(b)) {
+      res.put(b, res.get(b) + M.get(key) * S.M.get(a));
+    } else {
+      res.put(b, M.get(key) * S.M.get(a));
+    }
+  }
+
+
+
   @Override
-  public Matrix dmul(Matrix o) {
+  public Matrix dmul(Matrix o) throws Exception {
+    if (o instanceof SparseMatrix) {
+      SparseMatrix S = (SparseMatrix) o;
+      if (width != S.height) throw new Exception("The number of columns of the 1st matrix must " +
+              "be the same as the number of rows of the 2d matrix");
+      HashMap<Point, Double> res = new HashMap<>();
+      int size = M.size();
+      int proc = 4;
+      if (size < proc) {
+        proc = size;
+      }
+      int step = size / proc;
+      int accuracy = size % proc;
+      int i = 0, start = 0, end = step;
+      myThread[] t = new myThread[proc];
+      Point[] S1 = new Point[size];
+
+      for (Point key: M.keySet()) {
+        S1[i] = key;
+        i++;
+      }
+
+      for (i = 0; i < proc - 1; i++) {
+        t[i] = new myThread(S, S1, res, start, end);
+        start += step;
+        end += step;
+      }
+      t[proc - 1] = new myThread(S, S1, res, start, end + accuracy);
+
+      try {
+        for (i = 0; i < 4; i++) {
+          t[i].t.join();
+        }
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+     // ToString(res, height, S.width);
+      return new SparseMatrix(res, height, S.width);
+    }
     return null;
   }
 
@@ -128,19 +201,21 @@ public class SparseMatrix implements Matrix {
     if (o instanceof SparseMatrix) {
       SparseMatrix M2 = (SparseMatrix) o;
       if (height == M2.height || width == M2.width) {
-        int count1 = 0, count2 = 0;
+        int count = 0;
         if (M.size() == M2.M.size()) {
           for (Point key : M.keySet()) {
-            count1++;
             if (M2.M.containsKey(key)) {
               double a = M.get(key);
               double b = M2.M.get(key);
-              if (a == b) {
-                count2++;
+              if (a != b) {
+                return false;
+              }
+              else {
+                count++;
               }
             }
           }
-          return (count1 == count2);
+          return (count == M.size());
         }
       }
       return false;
@@ -159,7 +234,10 @@ public class SparseMatrix implements Matrix {
         }
         if (M.size() == count1) {
           for (Point key : M.keySet()) {
-            if (M2.M[key.x][key.y] == M.get(key)) {
+            if (M2.M[key.x][key.y] != M.get(key)) {
+              return false;
+            }
+            else {
               count2++;
             }
           }

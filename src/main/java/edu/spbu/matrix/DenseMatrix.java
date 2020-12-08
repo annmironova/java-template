@@ -2,6 +2,7 @@ package edu.spbu.matrix;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -41,13 +42,14 @@ public class DenseMatrix implements Matrix {
   }
 
   public DenseMatrix(double[][] mat) {
-    this.M = mat;
-    this.height = mat.length;
-    this.width = mat[0].length;
+    M = mat;
+    height = mat.length;
+    width = mat[0].length;
   }
 
 
   public void ToString(double[][] res, int h, int w) {
+
     StringBuilder builder = new StringBuilder();
     for (int i = 0; i < h; i++) {
       for (int j = 0; j < w; j++) {
@@ -56,6 +58,12 @@ public class DenseMatrix implements Matrix {
       builder.append("\n");
     }
     System.out.println(builder.toString());
+    try {
+      FileWriter writer = new FileWriter("result.txt", false);
+      writer.write(builder.toString());
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
   }
 
   @Override
@@ -84,7 +92,7 @@ public class DenseMatrix implements Matrix {
         }
       }
     }
-    ToString(res, res.length, res[0].length);
+    // ToString(res, res.length, res[0].length);
     return new DenseMatrix(res);
   }
 
@@ -107,14 +115,56 @@ public class DenseMatrix implements Matrix {
     return new SparseMatrix(res, height, SM.width);
   }
 
-  /**
-   * многопоточное умножение матриц
-   *
-   * @param o
-   * @return
-   */
+  class myThread implements Runnable {
+    Thread t;
+    int firstRow, lastRow;
+    DenseMatrix D, res;
+
+    myThread (int firstRow, int lastRow, DenseMatrix D, DenseMatrix res) {
+      this.firstRow = firstRow;
+      this.lastRow = lastRow;
+      this.D = D;
+      this.res = res;
+      t = new Thread(this);
+      t.start();
+    }
+
+    @Override public void run() {
+      for (int i = firstRow; i < lastRow; i++) {
+        for (int j = 0; j < D.width; j++) {
+          for (int l = 0; l < D.height; l++) {
+            res.M[i][j] += M[i][l] * D.M[l][j];
+          }
+        }
+      }
+    }
+  }
+
+
   @Override
-  public Matrix dmul(Matrix o) {
+  public Matrix dmul(Matrix o) throws Exception {
+    if (o instanceof DenseMatrix) {
+      DenseMatrix D = (DenseMatrix) o;
+      if (width != D.height) throw new Exception("The number of columns of the 1st matrix must " +
+              "be the same as the number of rows of the 2d matrix");
+      DenseMatrix res = new DenseMatrix(new double[height][D.width]);
+      int step = height / 4;
+      int accuracy = height - step * 4;
+
+      myThread t0 = new myThread(0, step, D, res);
+      myThread t1 = new myThread(step, 2 * step, D, res);
+      myThread t2 = new myThread(2 * step, 3 * step, D, res);
+      myThread t3 = new myThread(3 * step, 4 * step + accuracy, D, res);
+        try {
+          t0.t.join();
+          t1.t.join();
+          t2.t.join();
+          t3.t.join();
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+    return res;
+    }
     return null;
   }
 
@@ -149,7 +199,10 @@ public class DenseMatrix implements Matrix {
         }
         if (SM.M.size() == count1) {
           for (Point key : SM.M.keySet()) {
-            if (M[key.x][key.y] == SM.M.get(key)) {
+            if (M[key.x][key.y] != SM.M.get(key)) {
+              return false;
+            }
+            else {
               count2++;
             }
           }
